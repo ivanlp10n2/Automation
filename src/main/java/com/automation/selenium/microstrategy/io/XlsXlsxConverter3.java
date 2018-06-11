@@ -726,9 +726,9 @@ public class XlsXlsxConverter3 {
 
         //Add Today formula
         XSSFSheet main_sheet = ((XSSFWorkbook) wb_1).getSheetAt(0);
-        Short today_row = 5;
 
-        today_row.byteValue();
+
+
 //        System.out.print(main_sheet.getPhysicalNumberOfRows());
 //        setFormulaRow("=TODAY()-j4", formula_row);
 
@@ -744,8 +744,18 @@ public class XlsXlsxConverter3 {
         wb_1.close();
 */    }
 
-    private void setFormulaColumn(String formula, XSSFRow row){
+    private void setCellCoordinates(Sheet sheet, int row, int cell, CellType formula){
+        Row r = sheet.getRow(row);
+        if (r == null)
+            r = sheet.createRow(row);
 
+        Cell c = r.getCell(cell);
+        if(c == null)
+            c = r.createCell(cell, formula);
+
+    }
+
+    private void setCellCoordinates(int row, int cell, String formula, Object value){
 
     }
 }
