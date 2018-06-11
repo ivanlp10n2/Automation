@@ -3,7 +3,6 @@ package com.automation.selenium.microstrategy.io;
 
 import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.openxml4j.opc.OPCPackage;
-import org.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellReference;
@@ -718,23 +717,21 @@ public class XlsXlsxConverter3 {
         Workbook wb_2 = new XSSFWorkbook(OPCPackage.open(dir_2));
 
         //Set sheets
-        wb_1.createSheet("Last Week");
-        XSSFSheet destination= ((XSSFWorkbook) wb_1).getSheet("Last Week");
-        XSSFSheet source= ((XSSFWorkbook) wb_2).getSheetAt(0);
+//        wb_1.createSheet("Last Week");
+//        XSSFSheet destination= ((XSSFWorkbook) wb_1).getSheet("Last Week");
+//        XSSFSheet source= ((XSSFWorkbook) wb_2).getSheetAt(0);
 
-        copySheet(source, destination);
+//        copySheet(source, destination);
 
         //Add Today formula
         XSSFSheet main_sheet = ((XSSFWorkbook) wb_1).getSheetAt(0);
 
+        for (int i = 4; i <= 30; i++){
+            setCellCoordinates(main_sheet,i,17, CellType.FORMULA, "TODAY()-j" + i);
+        }
 
 
-//        System.out.print(main_sheet.getPhysicalNumberOfRows());
-//        setFormulaRow("=TODAY()-j4", formula_row);
-
-
-
-/*        //Parsear nombre con fecha
+      //Parsear nombre con fecha
         OutputStream os = new FileOutputStream("final.xlsx");
 
         System.out.print ("If you arrived here, it means you're good boy");
@@ -742,9 +739,9 @@ public class XlsXlsxConverter3 {
         os.flush();
         os.close();
         wb_1.close();
-*/    }
+    }
 
-    private void setCellCoordinates(Sheet sheet, int row, int cell, CellType formula){
+    private static void setCellCoordinates(Sheet sheet, int row, int cell, CellType formula, Object value){
         Row r = sheet.getRow(row);
         if (r == null)
             r = sheet.createRow(row);
@@ -752,10 +749,26 @@ public class XlsXlsxConverter3 {
         Cell c = r.getCell(cell);
         if(c == null)
             c = r.createCell(cell, formula);
+        c.setCellType(formula);
+        c.setCellFormula(value.toString());
+
+        //Verificación
+        /*
+        if (value instanceof String)
+            c.setCellValue(value.toString());
+        else if (value instanceof Double)
+            c.setCellValue((Double)value);
+        else if(value instanceof Calendar)
+            c.setCellValue((Calendar)value);
+        else if(value instanceof Date)
+            c.setCellValue((Date)value);
+        else if(value instanceof Boolean)
+            c.setCellValue((Boolean)value);
+*/
 
     }
 
-    private void setCellCoordinates(int row, int cell, String formula, Object value){
+    private static void setCellCoordinates(int row, int cell, String formula, Object value){
 
     }
 }
