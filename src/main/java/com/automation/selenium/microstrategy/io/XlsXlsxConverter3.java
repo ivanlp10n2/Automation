@@ -2,9 +2,8 @@ package com.automation.selenium.microstrategy.io;
 
 
 import org.apache.poi.hssf.usermodel.*;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
-import org.apache.poi.ss.formula.Formula;
+import org.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellReference;
@@ -710,7 +709,7 @@ public class XlsXlsxConverter3 {
                     + "Directv_Auto" + File.separator
                     + "SR_Phermosi_11may2018_0700AM.xlsx";
 
-    public static void main(String[] args) throws IOException, InvalidFormatException {
+    public static void main(String[] args) throws Exception {
 
         //Get files
         File excel_1 = new File(dir_1);
@@ -728,6 +727,8 @@ public class XlsXlsxConverter3 {
         //Add Today formula
         XSSFSheet main_sheet = ((XSSFWorkbook) wb_1).getSheetAt(0);
         Short today_row = 5;
+
+        today_row.byteValue();
 //        System.out.print(main_sheet.getPhysicalNumberOfRows());
 //        setFormulaRow("=TODAY()-j4", formula_row);
 
