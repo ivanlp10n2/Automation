@@ -3,7 +3,9 @@ package com.automation.selenium.microstrategy.io;
 
 import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.ss.formula.functions.Vlookup;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.xssf.usermodel.*;
@@ -726,9 +728,16 @@ public class XlsXlsxConverter3 {
         //Add Today formula
         XSSFSheet main_sheet = ((XSSFWorkbook) wb_1).getSheetAt(0);
 
-        for (int i = 4; i <= 30; i++){
-            setCellCoordinates(main_sheet,i,17, CellType.FORMULA, "TODAY()-j" + i);
+
+        final CellAddress first_incident_address = getFirstValContainAddress(main_sheet, "SR1");
+        final CellAddress last_incident_address = getLastValContainAddress(main_sheet, "SR");
+
+
+        for (int i = first_incident_address.getRow(); i <= last_incident_address.getRow(); i++){
+            setCellValue(main_sheet,i, 16, CellType.FORMULA, "TODAY()-j" + (i+1));
+            setCellValue(main_sheet, i, 17, CellType.FORMULA, Vlookup);
         }
+
 
 
       //Parsear nombre con fecha
@@ -741,7 +750,7 @@ public class XlsXlsxConverter3 {
         wb_1.close();
     }
 
-    private static void setCellCoordinates(Sheet sheet, int row, int cell, CellType formula, Object value){
+    private static void setCellValue(Sheet sheet, int row, int cell, CellType formula, Object value){
         Row r = sheet.getRow(row);
         if (r == null)
             r = sheet.createRow(row);
@@ -752,8 +761,8 @@ public class XlsXlsxConverter3 {
         c.setCellType(formula);
         c.setCellFormula(value.toString());
 
-        //Verificación
-        /*
+    //region casting
+/*
         if (value instanceof String)
             c.setCellValue(value.toString());
         else if (value instanceof Double)
@@ -765,10 +774,96 @@ public class XlsXlsxConverter3 {
         else if(value instanceof Boolean)
             c.setCellValue((Boolean)value);
 */
+    //endregion
 
     }
 
-    private static void setCellCoordinates(int row, int cell, String formula, Object value){
+    private static CellAddress getFirstValAddress(Sheet s, String val) {
 
+        Iterator<Row> iterator = s.iterator();
+        CellAddress columnNumber=null;
+
+        while(iterator.hasNext()){
+            Row nextRow = iterator.next();
+            Iterator<Cell> cellIterator = nextRow.cellIterator();
+            while (cellIterator.hasNext()) {
+                Cell cell = cellIterator.next();
+                if(cell.getCellTypeEnum()==CellType.STRING){
+                    String text = cell.getStringCellValue();
+                    if (val.equals(text)) {
+                        columnNumber=cell.getAddress();
+                        return columnNumber;
+                    }
+                }
+            }
+        }
+        return columnNumber;
     }
+
+    private static CellAddress getFirstValContainAddress(Sheet s, String val) {
+
+        Iterator<Row> iterator = s.iterator();
+        CellAddress columnNumber=null;
+
+        while(iterator.hasNext()){
+            Row nextRow = iterator.next();
+            Iterator<Cell> cellIterator = nextRow.cellIterator();
+            while (cellIterator.hasNext()) {
+                Cell cell = cellIterator.next();
+                if(cell.getCellTypeEnum()==CellType.STRING){
+                    String text = cell.getStringCellValue();
+                    if (text.contains(val)) {
+                        columnNumber=cell.getAddress();
+                        return columnNumber;
+                    }
+                }
+            }
+        }
+        return columnNumber;
+    }
+
+    private static CellAddress getLastValAddress(Sheet s, String val) {
+
+        Iterator<Row> iterator = s.iterator();
+        CellAddress columnNumber=null;
+
+        while(iterator.hasNext()){
+            Row nextRow = iterator.next();
+            Iterator<Cell> cellIterator = nextRow.cellIterator();
+            while (cellIterator.hasNext()) {
+                Cell cell = cellIterator.next();
+                if(cell.getCellTypeEnum()==CellType.STRING){
+                    String text = cell.getStringCellValue();
+                    if (text.equals(val)) {
+                        columnNumber=cell.getAddress();
+                        break;
+                    }
+                }
+            }
+        }
+        return columnNumber;
+    }
+
+    private static CellAddress getLastValContainAddress(Sheet s, String val) {
+
+        Iterator<Row> iterator = s.iterator();
+        CellAddress columnNumber=null;
+
+        while(iterator.hasNext()){
+            Row nextRow = iterator.next();
+            Iterator<Cell> cellIterator = nextRow.cellIterator();
+            while (cellIterator.hasNext()) {
+                Cell cell = cellIterator.next();
+                if(cell.getCellTypeEnum()==CellType.STRING){
+                    String text = cell.getStringCellValue();
+                    if (text.contains(val)) {
+                        columnNumber=cell.getAddress();
+                        break;
+                    }
+                }
+            }
+        }
+        return columnNumber;
+    }
+
 }
