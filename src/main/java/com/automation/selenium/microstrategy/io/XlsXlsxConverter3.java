@@ -3,7 +3,6 @@ package com.automation.selenium.microstrategy.io;
 
 import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.openxml4j.opc.OPCPackage;
-import org.apache.poi.ss.formula.functions.Vlookup;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -247,9 +246,9 @@ public class XlsXlsxConverter3 {
     }
 
     /**
-     * Récupère les informations de fusion des cellules dans la sheet source
+     * Récupère les informations de fusion des cellules dans la sheet source_dir
      * pour les appliquer à la sheet destination... Récupère toutes les zones
-     * merged dans la sheet source et regarde pour chacune d'elle si elle se
+     * merged dans la sheet source_dir et regarde pour chacune d'elle si elle se
      * trouve dans la current row que nous traitons. Si oui, retourne l'objet
      * CellRangeAddress.
      *
@@ -694,48 +693,60 @@ public class XlsXlsxConverter3 {
         }
     }
 
-    public static final String dir_1 =
+    public static final String destination_dir =
             "C:" + File.separator
                     + "Users" + File.separator
                     + "ivan.monzon" + File.separator
                     + "Documents" + File.separator
                     + "Directv_Auto" + File.separator
-                    + "SR_Phermosi_01jun2018_0701AM.xlsx";
+                    + "._15jun2018_0700AM.xlsx";
 
-    public static final String dir_2 =
+    public static final String source_dir =
             "C:" + File.separator
                     + "Users" + File.separator
                     + "ivan.monzon" + File.separator
                     + "Documents" + File.separator
                     + "Directv_Auto" + File.separator
-                    + "SR_Phermosi_11may2018_0700AM.xlsx";
+                    + "._08jun2018_0702AM.xlsx";
 
     public static void main(String[] args) throws Exception {
 
         //Get files
-        File excel_1 = new File(dir_1);
-        File excel_2 = new File(dir_2);
-        Workbook wb_1 = new XSSFWorkbook(OPCPackage.open(dir_1));
-        Workbook wb_2 = new XSSFWorkbook(OPCPackage.open(dir_2));
+        Workbook wb_1 = new XSSFWorkbook(OPCPackage.open(destination_dir));
+        Workbook wb_2 = new XSSFWorkbook(OPCPackage.open(source_dir));
 
         //Set sheets
-//        wb_1.createSheet("Last Week");
-//        XSSFSheet destination= ((XSSFWorkbook) wb_1).getSheet("Last Week");
-//        XSSFSheet source= ((XSSFWorkbook) wb_2).getSheetAt(0);
+        wb_1.createSheet("Last Week");
+        XSSFSheet sLastWeek = ((XSSFWorkbook) wb_1).getSheet("Last Week");
+        XSSFSheet source = ((XSSFWorkbook) wb_2).getSheetAt(0);
 
-//        copySheet(source, destination);
+        copySheet(source, sLastWeek);
 
         //Add Today formula
-        XSSFSheet main_sheet = ((XSSFWorkbook) wb_1).getSheetAt(0);
+        XSSFSheet sMain = ((XSSFWorkbook) wb_1).getSheetAt(0);
 
 
-        final CellAddress first_incident_address = getFirstValContainAddress(main_sheet, "SR1");
-        final CellAddress last_incident_address = getLastValContainAddress(main_sheet, "SR");
+        //configurar para SR o para INC
+        final CellAddress first_inc_address_main = getFirstValContainAddress(sMain, "IN9");
+        final CellAddress last_inc_address_main = getLastValContainAddress(sMain, "IN");
 
+        final CellAddress first_inc_address_lw = getFirstValContainAddress(sLastWeek, "IN9");
+        final CellAddress last_inc_address_lw = getLastValContainAddress(sLastWeek, "IN");
 
-        for (int i = first_incident_address.getRow(); i <= last_incident_address.getRow(); i++){
-            setCellValue(main_sheet,i, 16, CellType.FORMULA, "TODAY()-j" + (i+1));
-            setCellValue(main_sheet, i, 17, CellType.FORMULA, Vlookup);
+        final DataFormat format = wb_1.createDataFormat();
+
+        for (int i = first_inc_address_main.getRow(); i <= last_inc_address_main.getRow(); i++){
+            setCellValue(sMain,i, 16, format, CellType.FORMULA, "TODAY()-j" + (i+1));
+            setCellValue(sMain, i, 17,
+                                    CellType.FORMULA,
+                                    getVlookUpFormulaOnPos(
+                                            "A" + (i+1),
+                                            sLastWeek.getSheetName(),
+                                            first_inc_address_lw.toString() + ":"
+                                                    + "I" + (last_inc_address_lw.getRow()+1),
+                                            7,
+                                            "FALSE"
+            ));
         }
 
 
@@ -748,9 +759,24 @@ public class XlsXlsxConverter3 {
         os.flush();
         os.close();
         wb_1.close();
+
     }
 
-    private static void setCellValue(Sheet sheet, int row, int cell, CellType formula, Object value){
+
+    private static void setCellValue(Sheet sheet, int row, int cell, CellType formula, Object value) {
+        Row r = sheet.getRow(row);
+        if (r == null)
+            r = sheet.createRow(row);
+
+        Cell c = r.getCell(cell);
+        if (c == null)
+            c = r.createCell(cell, formula);
+        c.setCellType(formula);
+        c.setCellFormula(value.toString());
+
+    }
+
+        private static void setCellValue(Sheet sheet, int row, int cell, DataFormat format,CellType formula, Object value){
         Row r = sheet.getRow(row);
         if (r == null)
             r = sheet.createRow(row);
@@ -761,6 +787,10 @@ public class XlsXlsxConverter3 {
         c.setCellType(formula);
         c.setCellFormula(value.toString());
 
+        CellStyle cellstyle = c.getCellStyle();
+        cellstyle.setDataFormat(format.getFormat("#"));
+
+        c.setCellStyle(cellstyle);
     //region casting
 /*
         if (value instanceof String)
@@ -866,4 +896,20 @@ public class XlsXlsxConverter3 {
         return columnNumber;
     }
 
+    private static String getVlookUpFormulaOnPos(String pos, String sheet, String grid, int col, String bool) {
+        return "VLOOKUP("
+                + pos + ","
+                + "'" + sheet + "'!"
+                + grid + ","
+                + col + ","
+                + bool + ")";
+    }
+    
+    private static String getVlookUpFormulaOnPos(String pos, String sheet, String grid, int col) {
+        return "VLOOKUP("
+                + pos + ","
+                + "'" + sheet + "'!"
+                + grid + ","
+                + col + ")";
+    }
 }
