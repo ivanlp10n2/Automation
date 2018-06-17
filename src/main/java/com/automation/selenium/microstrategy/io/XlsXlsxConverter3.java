@@ -725,7 +725,6 @@ public class XlsXlsxConverter3 {
         //Add Today formula
         XSSFSheet sMain = ((XSSFWorkbook) wb_1).getSheetAt(0);
 
-
         //configurar para SR o para INC
         final CellAddress first_inc_address_main = getFirstValContainAddress(sMain, "IN9");
         final CellAddress last_inc_address_main = getLastValContainAddress(sMain, "IN");
@@ -749,17 +748,12 @@ public class XlsXlsxConverter3 {
             ));
         }
 
+        
 
 
       //Parsear nombre con fecha
-        OutputStream os = new FileOutputStream("final.xlsx");
-
         System.out.print ("If you arrived here, it means you're good boy");
-        wb_1.write(os);
-        os.flush();
-        os.close();
         wb_1.close();
-
     }
 
 
@@ -805,6 +799,13 @@ public class XlsXlsxConverter3 {
             c.setCellValue((Boolean)value);
 */
     //endregion
+    }
+
+    private static void setHeader(String title, int col){
+
+    }
+
+    private static void setHeader(String title, int col, CellStyle cs){
 
     }
 
