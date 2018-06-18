@@ -4,7 +4,6 @@ package com.automation.selenium.microstrategy.io;
 import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.openxml4j.util.ZipSecureFile;
-import org.apache.poi.ss.formula.functions.Column;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -681,7 +680,31 @@ public class XlsXlsxConverter3 {
         }
     }
 
-    private static void setCellValue(Sheet sheet, int row, int cell, CellType formula, Object value) {
+
+
+    private static void setCellValue(Sheet sheet, int row, int cell, CellType type, Object value) {
+        Row r = sheet.getRow(row);
+        if (r == null)
+            r = sheet.createRow(row);
+
+        Cell c = r.getCell(cell);
+        if (c == null)
+            c = r.createCell(cell, type);
+
+        if (value instanceof String)
+            c.setCellValue(value.toString());
+        else if (value instanceof Double)
+            c.setCellValue((Double)value);
+        else if(value instanceof Calendar)
+            c.setCellValue((Calendar)value);
+        else if(value instanceof Date)
+            c.setCellValue((Date)value);
+        else if(value instanceof Boolean)
+            c.setCellValue((Boolean)value);
+    }
+
+
+    private static void setFormulaCell(Sheet sheet, int row, int cell, CellType formula, Object value) {
         Row r = sheet.getRow(row);
         if (r == null)
             r = sheet.createRow(row);
@@ -694,7 +717,7 @@ public class XlsXlsxConverter3 {
 
     }
 
-    private static void setCellValue(Sheet sheet, int row, int cell, DataFormat format, CellType formula, Object value) {
+    private static void setFormulaCell(Sheet sheet, int row, int cell, DataFormat format, CellType formula, Object value) {
         Row r = sheet.getRow(row);
         if (r == null)
             r = sheet.createRow(row);
@@ -712,15 +735,15 @@ public class XlsXlsxConverter3 {
         //region casting
 /*
         if (value instanceof String)
-            c.setCellValue(value.toString());
+            c.setFormulaCell(value.toString());
         else if (value instanceof Double)
-            c.setCellValue((Double)value);
+            c.setFormulaCell((Double)value);
         else if(value instanceof Calendar)
-            c.setCellValue((Calendar)value);
+            c.setFormulaCell((Calendar)value);
         else if(value instanceof Date)
-            c.setCellValue((Date)value);
+            c.setFormulaCell((Date)value);
         else if(value instanceof Boolean)
-            c.setCellValue((Boolean)value);
+            c.setFormulaCell((Boolean)value);
 */
         //endregion
     }
@@ -859,7 +882,7 @@ public class XlsXlsxConverter3 {
      * Windows
      * */
 
-
+/*
     public static final String destination_dir =
             "C:" + File.separator
                     + "Users" + File.separator
@@ -875,12 +898,12 @@ public class XlsXlsxConverter3 {
                     + "Documents" + File.separator
                     + "Directv_Auto" + File.separator
                     + "._08jun2018_0702AM.xlsx";
-
+*/
 
     /**
      * Linux
      */
-/*
+
     public static final String destination_dir =
             "/" + File.separator
                     + "home" + File.separator
@@ -897,7 +920,7 @@ public class XlsXlsxConverter3 {
                     + "dataset" + File.separator
                     + "SR_Phermosi_08jun2018_0701AM.xlsx";
 
-*/
+
     public static void main(String[] args) throws Exception {
 
         ZipSecureFile.setMinInflateRatio(0);
@@ -907,27 +930,27 @@ public class XlsXlsxConverter3 {
         Workbook wb_2 = new XSSFWorkbook(OPCPackage.open(source_dir));
 
         //Set sheets
-//        wb_1.createSheet("Last Week");
+        wb_1.createSheet("Last Week");
         XSSFSheet sLastWeek = ((XSSFWorkbook) wb_1).getSheet("Last Week");
         XSSFSheet source = ((XSSFWorkbook) wb_2).getSheetAt(0);
 
-//        copySheet(source, sLastWeek);
+        copySheet(source, sLastWeek);
 
         //Add Today formula
         XSSFSheet sMain = ((XSSFWorkbook) wb_1).getSheetAt(0);
 
         //configurar para SR o para INC
-        final CellAddress first_inc_address_main = getFirstValContainAddress(sMain, "IN9");
-        final CellAddress last_inc_address_main = getLastValContainAddress(sMain, "IN");
+        final CellAddress first_inc_address_main = getFirstValContainAddress(sMain, "SR1");
+        final CellAddress last_inc_address_main = getLastValContainAddress(sMain, "SR");
 
-        final CellAddress first_inc_address_lw = getFirstValContainAddress(sLastWeek, "IN9");
-        final CellAddress last_inc_address_lw = getLastValContainAddress(sLastWeek, "IN");
+        final CellAddress first_inc_address_lw = getFirstValContainAddress(sLastWeek, "SR1");
+        final CellAddress last_inc_address_lw = getLastValContainAddress(sLastWeek, "SR");
 
         final DataFormat format = wb_1.createDataFormat();
 
         for (int i = first_inc_address_main.getRow(); i <= last_inc_address_main.getRow(); i++){
-            setCellValue(sMain,i, 16, format, CellType.FORMULA, "TODAY()-j" + (i+1));
-            setCellValue(sMain, i, 17,
+            setFormulaCell(sMain,i, 16, format, CellType.FORMULA, "TODAY()-j" + (i+1));
+            setFormulaCell(sMain, i, 17,
                                     CellType.FORMULA,
                                     getVlookUpFormulaOnPos(
                                             "A" + (i+1),
@@ -939,31 +962,38 @@ public class XlsXlsxConverter3 {
             ));
         }
 
+        final Cell cell_header_sourc = sMain.getRow(2).getCell(15);
+        Cell cell_header_dest = sMain.getRow(2).getCell(16);
+        if (cell_header_dest == null)
+            cell_header_dest = sMain.getRow(2).createCell(16);
 
-        final CellAddress headerStyle = new CellAddress(3,7);
-        final CellAddress headerStyle_2 = new CellAddress(3, 8);
-
-        Cell cell = sMain.getRow(2).getCell(4);
-
-        //XSSFRow row = sMain.createRow(2);
-
-        Cell cell_1 = sMain.createRow(2).createCell(16);
-
-        if (cell == null)
+        if (cell_header_sourc == null)
             System.out.println("not found cell");
-        else if(cell_1 == null )
+        else if(cell_header_dest == null )
             System.out.println("not found cell_1");
 
-        setCellValue(sMain, cell_1.getRowIndex(), cell_1.getColumnIndex(), CellType.NUMERIC, 4);
-        //copyCell(cl,c2, null);
-
-        //setCellNumericValue(sMain, 3,7, 322222222);
+        copyCell(cell_header_sourc, cell_header_dest, new ArrayList<CellStyle>());
+        setCellValue(sMain, 2, 16, CellType.STRING, "Aging");
 
 
-         //copyRow(sMain, sMain, sMain.getRow(3), sMain.getRow(4), new ArrayList<CellStyle>()) ;
+
+        //Start operations
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         OutputStream os = new FileOutputStream("final.xlsx");
-
-
 
       //Parsear nombre con fecha
         System.out.print ("If you arrived here, it means you're good boy");
