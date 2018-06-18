@@ -3,6 +3,7 @@ package com.automation.selenium.microstrategy.io;
 
 import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.openxml4j.util.ZipSecureFile;
 import org.apache.poi.ss.formula.functions.Column;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellAddress;
@@ -724,6 +725,19 @@ public class XlsXlsxConverter3 {
         //endregion
     }
 
+    private static void setCellNumericValue(Sheet sheet, int row, int cell, int number) {
+        Row r = sheet.getRow(row);
+        if (r == null)
+            r = sheet.createRow(row);
+
+        Cell c = r.getCell(cell);
+        if (c == null)
+            c = r.createCell(cell, CellType.NUMERIC);
+        c.setCellType(CellType.NUMERIC);
+        c.setCellValue(number);
+
+    }
+
     private static CellAddress getFirstValAddress(Sheet s, String val) {
 
         Iterator<Row> iterator = s.iterator();
@@ -886,6 +900,8 @@ public class XlsXlsxConverter3 {
 
     public static void main(String[] args) throws Exception {
 
+        ZipSecureFile.setMinInflateRatio(0);
+
         //Get files
         Workbook wb_1 = new XSSFWorkbook(OPCPackage.open(destination_dir));
         Workbook wb_2 = new XSSFWorkbook(OPCPackage.open(source_dir));
@@ -924,10 +940,19 @@ public class XlsXlsxConverter3 {
         }
 
 
-        final CellAddress headerSyle = new CellAddress(3,7);
+        final CellAddress headerStyle = new CellAddress(3,7);
+        final CellAddress headerStyle_2 = new CellAddress(3, 8);
+
+        Cell cl = sMain.getRow(3).getCell(7);
+
+        Cell cl2 = sMain.getRow(3).getCell(8);
+
+        copyCell(cl,cl2,new ArrayList<CellStyle>());
+
+        setCellNumericValue(sMain, 3,7, 322222222);
 
 
-//        copyRow(sMain, sMain, sMain.getRow(3), sMain.getRow(4), new ArrayList<CellStyle>()) ;
+         //copyRow(sMain, sMain, sMain.getRow(3), sMain.getRow(4), new ArrayList<CellStyle>()) ;
 
 
 
