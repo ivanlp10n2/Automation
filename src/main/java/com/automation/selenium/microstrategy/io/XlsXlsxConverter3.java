@@ -403,23 +403,23 @@ public class XlsXlsxConverter3 {
                 newCell.setCellStyle(newCellStyle);
             }
         }
-        switch (oldCell.getCellType()) {
-            case Cell.CELL_TYPE_STRING:
+        switch (oldCell.getCellTypeEnum()) {
+            case STRING:
                 newCell.setCellValue(oldCell.getStringCellValue());
                 break;
-            case Cell.CELL_TYPE_NUMERIC:
+            case NUMERIC:
                 newCell.setCellValue(oldCell.getNumericCellValue());
                 break;
-            case Cell.CELL_TYPE_BLANK:
-                newCell.setCellType(Cell.CELL_TYPE_BLANK);
+            case BLANK:
+                newCell.setCellType(CellType.BLANK);
                 break;
-            case Cell.CELL_TYPE_BOOLEAN:
+            case BOOLEAN:
                 newCell.setCellValue(oldCell.getBooleanCellValue());
                 break;
-            case Cell.CELL_TYPE_ERROR:
+            case ERROR:
                 newCell.setCellErrorValue(oldCell.getErrorCellValue());
                 break;
-            case Cell.CELL_TYPE_FORMULA:
+            case FORMULA:
                 newCell.setCellFormula(oldCell.getCellFormula());
                 formulaInfoList.add(new FormulaInfo(oldCell.getSheet().getSheetName(), oldCell.getRowIndex(), oldCell
                         .getColumnIndex(), oldCell.getCellFormula()));
@@ -439,7 +439,7 @@ public class XlsXlsxConverter3 {
         while (iterator.hasNext() && returnCellStyle == null) {
             currentCellStyle = iterator.next();
 
-            if (currentCellStyle.getAlignment() != styleToFind.getAlignment()) {
+            if (currentCellStyle.getAlignmentEnum() != styleToFind.getAlignmentEnum()) {
                 continue;
             }
             if (currentCellStyle.getHidden() != styleToFind.getHidden()) {
@@ -451,16 +451,16 @@ public class XlsXlsxConverter3 {
             if (currentCellStyle.getWrapText() != styleToFind.getWrapText()) {
                 continue;
             }
-            if (currentCellStyle.getBorderBottom() != styleToFind.getBorderBottom()) {
+            if (currentCellStyle.getBorderBottomEnum() != styleToFind.getBorderBottomEnum()) {
                 continue;
             }
-            if (currentCellStyle.getBorderLeft() != styleToFind.getBorderLeft()) {
+            if (currentCellStyle.getBorderLeftEnum() != styleToFind.getBorderLeftEnum()) {
                 continue;
             }
-            if (currentCellStyle.getBorderRight() != styleToFind.getBorderRight()) {
+            if (currentCellStyle.getBorderRightEnum() != styleToFind.getBorderRightEnum()) {
                 continue;
             }
-            if (currentCellStyle.getBorderTop() != styleToFind.getBorderTop()) {
+            if (currentCellStyle.getBorderTopEnum() != styleToFind.getBorderTopEnum()) {
                 continue;
             }
             if (currentCellStyle.getBottomBorderColor() != styleToFind.getBottomBorderColor()) {
@@ -472,7 +472,7 @@ public class XlsXlsxConverter3 {
             if (currentCellStyle.getFillForegroundColor() != styleToFind.getFillForegroundColor()) {
                 continue;
             }
-            if (currentCellStyle.getFillPattern() != styleToFind.getFillPattern()) {
+            if (currentCellStyle.getFillPatternEnum() != styleToFind.getFillPatternEnum()) {
                 continue;
             }
             if (currentCellStyle.getIndention() != styleToFind.getIndention()) {
@@ -490,7 +490,7 @@ public class XlsXlsxConverter3 {
             if (currentCellStyle.getTopBorderColor() != styleToFind.getTopBorderColor()) {
                 continue;
             }
-            if (currentCellStyle.getVerticalAlignment() != styleToFind.getVerticalAlignment()) {
+            if (currentCellStyle.getVerticalAlignmentEnum() != styleToFind.getVerticalAlignmentEnum()) {
                 continue;
             }
 
@@ -859,7 +859,7 @@ public class XlsXlsxConverter3 {
      * Windows
      * */
 
-/*
+
     public static final String destination_dir =
             "C:" + File.separator
                     + "Users" + File.separator
@@ -875,12 +875,12 @@ public class XlsXlsxConverter3 {
                     + "Documents" + File.separator
                     + "Directv_Auto" + File.separator
                     + "._08jun2018_0702AM.xlsx";
-*/
+
 
     /**
      * Linux
      */
-
+/*
     public static final String destination_dir =
             "/" + File.separator
                     + "home" + File.separator
@@ -897,7 +897,7 @@ public class XlsXlsxConverter3 {
                     + "dataset" + File.separator
                     + "SR_Phermosi_08jun2018_0701AM.xlsx";
 
-
+*/
     public static void main(String[] args) throws Exception {
 
         ZipSecureFile.setMinInflateRatio(0);
@@ -917,11 +917,11 @@ public class XlsXlsxConverter3 {
         XSSFSheet sMain = ((XSSFWorkbook) wb_1).getSheetAt(0);
 
         //configurar para SR o para INC
-        final CellAddress first_inc_address_main = getFirstValContainAddress(sMain, "SR1");
-        final CellAddress last_inc_address_main = getLastValContainAddress(sMain, "SR");
+        final CellAddress first_inc_address_main = getFirstValContainAddress(sMain, "IN9");
+        final CellAddress last_inc_address_main = getLastValContainAddress(sMain, "IN");
 
-        final CellAddress first_inc_address_lw = getFirstValContainAddress(sLastWeek, "SR1");
-        final CellAddress last_inc_address_lw = getLastValContainAddress(sLastWeek, "SR");
+        final CellAddress first_inc_address_lw = getFirstValContainAddress(sLastWeek, "IN9");
+        final CellAddress last_inc_address_lw = getLastValContainAddress(sLastWeek, "IN");
 
         final DataFormat format = wb_1.createDataFormat();
 
@@ -943,21 +943,33 @@ public class XlsXlsxConverter3 {
         final CellAddress headerStyle = new CellAddress(3,7);
         final CellAddress headerStyle_2 = new CellAddress(3, 8);
 
-        Cell cl = sMain.getRow(3).getCell(7);
+        Cell cell = sMain.getRow(2).getCell(4);
 
-        Cell cl2 = sMain.getRow(3).getCell(8);
+        //XSSFRow row = sMain.createRow(2);
 
-        copyCell(cl,cl2,new ArrayList<CellStyle>());
+        Cell cell_1 = sMain.createRow(2).createCell(16);
 
-        setCellNumericValue(sMain, 3,7, 322222222);
+        if (cell == null)
+            System.out.println("not found cell");
+        else if(cell_1 == null )
+            System.out.println("not found cell_1");
+
+        setCellValue(sMain, cell_1.getRowIndex(), cell_1.getColumnIndex(), CellType.NUMERIC, 4);
+        //copyCell(cl,c2, null);
+
+        //setCellNumericValue(sMain, 3,7, 322222222);
 
 
          //copyRow(sMain, sMain, sMain.getRow(3), sMain.getRow(4), new ArrayList<CellStyle>()) ;
+        OutputStream os = new FileOutputStream("final.xlsx");
 
 
 
       //Parsear nombre con fecha
         System.out.print ("If you arrived here, it means you're good boy");
+        wb_1.write(os);
+        os.flush();
+        os.close();
         wb_1.close();
     }
 
