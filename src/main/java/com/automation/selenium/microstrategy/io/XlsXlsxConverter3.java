@@ -66,6 +66,8 @@ public class XlsXlsxConverter3 {
 
     static List<FormulaInfo> formulaInfoList = new ArrayList<FormulaInfo>();
 
+
+
     public static void refreshFormula(XSSFWorkbook workbook) {
         for (FormulaInfo formulaInfo : formulaInfoList) {
             workbook.getSheet(formulaInfo.getSheetName()).getRow(formulaInfo.getRowIndex())
@@ -680,8 +682,6 @@ public class XlsXlsxConverter3 {
         }
     }
 
-
-
     private static void setCellValue(Sheet sheet, int row, int cell, CellType type, Object value) {
         Row r = sheet.getRow(row);
         if (r == null)
@@ -930,11 +930,11 @@ public class XlsXlsxConverter3 {
         Workbook wb_2 = new XSSFWorkbook(OPCPackage.open(source_dir));
 
         //Set sheets
-        wb_1.createSheet("Last Week");
+    //    wb_1.createSheet("Last Week");
         XSSFSheet sLastWeek = ((XSSFWorkbook) wb_1).getSheet("Last Week");
         XSSFSheet source = ((XSSFWorkbook) wb_2).getSheetAt(0);
 
-        copySheet(source, sLastWeek);
+    //    copySheet(source, sLastWeek);
 
         //Add Today formula
         XSSFSheet sMain = ((XSSFWorkbook) wb_1).getSheetAt(0);
@@ -975,16 +975,15 @@ public class XlsXlsxConverter3 {
         copyCell(cell_header_sourc, cell_header_dest, new ArrayList<CellStyle>());
         setCellValue(sMain, 2, 16, CellType.STRING, "Aging");
 
-
-
         //Start operations
 
+        XSSFFormulaEvaluator.evaluateAllFormulaCells(wb_1);
 
-
-
-
-
-
+        for (int i = first_inc_address_main.getRow(); i <= last_inc_address_main.getRow(); i++){
+            FormulaEvaluator evaluator = wb_1.getCreationHelper().createFormulaEvaluator();
+            evaluator.evaluateFormulaCellEnum(sMain.getRow(i).getCell(17));
+            System.out.println(sMain.getRow(i).getCell(17));
+        }
 
 
 
