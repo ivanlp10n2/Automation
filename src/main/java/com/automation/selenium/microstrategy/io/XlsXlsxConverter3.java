@@ -67,7 +67,6 @@ public class XlsXlsxConverter3 {
     static List<FormulaInfo> formulaInfoList = new ArrayList<FormulaInfo>();
 
 
-
     public static void refreshFormula(XSSFWorkbook workbook) {
         for (FormulaInfo formulaInfo : formulaInfoList) {
             workbook.getSheet(formulaInfo.getSheetName()).getRow(formulaInfo.getRowIndex())
@@ -694,13 +693,13 @@ public class XlsXlsxConverter3 {
         if (value instanceof String)
             c.setCellValue(value.toString());
         else if (value instanceof Double)
-            c.setCellValue((Double)value);
-        else if(value instanceof Calendar)
-            c.setCellValue((Calendar)value);
-        else if(value instanceof Date)
-            c.setCellValue((Date)value);
-        else if(value instanceof Boolean)
-            c.setCellValue((Boolean)value);
+            c.setCellValue((Double) value);
+        else if (value instanceof Calendar)
+            c.setCellValue((Calendar) value);
+        else if (value instanceof Date)
+            c.setCellValue((Date) value);
+        else if (value instanceof Boolean)
+            c.setCellValue((Boolean) value);
     }
 
 
@@ -878,18 +877,19 @@ public class XlsXlsxConverter3 {
 
     }
 
+
     /**
      * Windows
      * */
 
-/*
+
     public static final String destination_dir =
             "C:" + File.separator
                     + "Users" + File.separator
                     + "ivan.monzon" + File.separator
                     + "Documents" + File.separator
                     + "Directv_Auto" + File.separator
-                    + "._15jun2018_0700AM.xlsx";
+                    + "SR_Phermosi_22jun2018_0700AM.xlsx";
 
     public static final String source_dir =
             "C:" + File.separator
@@ -897,13 +897,13 @@ public class XlsXlsxConverter3 {
                     + "ivan.monzon" + File.separator
                     + "Documents" + File.separator
                     + "Directv_Auto" + File.separator
-                    + "._08jun2018_0702AM.xlsx";
-*/
+                    + "SR_Phermosi_15jun2018_0701AM.xlsx";
+
 
     /**
      * Linux
      */
-
+/*
     public static final String destination_dir =
             "/" + File.separator
                     + "home" + File.separator
@@ -920,7 +920,7 @@ public class XlsXlsxConverter3 {
                     + "dataset" + File.separator
                     + "SR_Phermosi_08jun2018_0701AM.xlsx";
 
-
+*/
     public static void main(String[] args) throws Exception {
 
         ZipSecureFile.setMinInflateRatio(0);
@@ -928,16 +928,19 @@ public class XlsXlsxConverter3 {
         //Get files
         Workbook wb_1 = new XSSFWorkbook(OPCPackage.open(destination_dir));
         Workbook wb_2 = new XSSFWorkbook(OPCPackage.open(source_dir));
+        Workbook wb_final = new XSSFWorkbook();
 
-        //Set sheets
-    //    wb_1.createSheet("Last Week");
-        XSSFSheet sLastWeek = ((XSSFWorkbook) wb_1).getSheet("Last Week");
-        XSSFSheet source = ((XSSFWorkbook) wb_2).getSheetAt(0);
+        wb_final.createSheet("Actual Week");
+        wb_final.createSheet("Last Week");
+        wb_final.createSheet("Final Report");
 
-    //    copySheet(source, sLastWeek);
+        XSSFSheet source_act = ((XSSFWorkbook) wb_1).getSheetAt(0);
+        XSSFSheet sMain = ((XSSFWorkbook) wb_final).getSheetAt(0);
+        XSSFSheet sLastWeek = ((XSSFWorkbook) wb_final).getSheet("Last Week");
+        XSSFSheet source_prev = ((XSSFWorkbook) wb_2).getSheetAt(0);
 
-        //Add Today formula
-        XSSFSheet sMain = ((XSSFWorkbook) wb_1).getSheetAt(0);
+        copySheet(source_act, sMain);
+        copySheet(source_prev, sLastWeek);
 
         //configurar para SR o para INC
         final CellAddress first_inc_address_main = getFirstValContainAddress(sMain, "SR1");
@@ -946,7 +949,7 @@ public class XlsXlsxConverter3 {
         final CellAddress first_inc_address_lw = getFirstValContainAddress(sLastWeek, "SR1");
         final CellAddress last_inc_address_lw = getLastValContainAddress(sLastWeek, "SR");
 
-        final DataFormat format = wb_1.createDataFormat();
+        final DataFormat format = wb_final.createDataFormat();
 
         for (int i = first_inc_address_main.getRow(); i <= last_inc_address_main.getRow(); i++){
             setFormulaCell(sMain,i, 16, format, CellType.FORMULA, "TODAY()-j" + (i+1));
@@ -960,6 +963,7 @@ public class XlsXlsxConverter3 {
                                             7,
                                             "FALSE"
             ));
+
         }
 
         final Cell cell_header_sourc = sMain.getRow(2).getCell(15);
@@ -977,29 +981,40 @@ public class XlsXlsxConverter3 {
 
         //Start operations
 
-        XSSFFormulaEvaluator.evaluateAllFormulaCells(wb_1);
+        CellReference vlookup_ref = new CellReference("d2");
+        FormulaEvaluator evaluator = wb_final.getCreationHelper().createFormulaEvaluator();
+
 
         for (int i = first_inc_address_main.getRow(); i <= last_inc_address_main.getRow(); i++){
-            FormulaEvaluator evaluator = wb_1.getCreationHelper().createFormulaEvaluator();
-            evaluator.evaluateFormulaCellEnum(sMain.getRow(i).getCell(17));
-            System.out.println(sMain.getRow(i).getCell(17));
+            CellValue cellValue = evaluator.evaluate(sMain.getRow(i).getCell(17));
+
+            switch (cellValue.getCellTypeEnum()) {
+                case BOOLEAN:
+                    System.out.println(cellValue.getBooleanValue());
+                    break;
+                case NUMERIC:
+                    System.out.println(cellValue.getNumberValue());
+                    break;
+                case STRING:
+                    System.out.println(cellValue.getStringValue());
+                    break;
+                case BLANK:
+                    break;
+                case ERROR:
+                    System.out.println("#NA");
+                    break;
+            }
         }
 
 
-
-
-
-
-
-
-        OutputStream os = new FileOutputStream("final.xlsx");
+        OutputStream os = new FileOutputStream("C:\\Users\\ivan.monzon\\Documents\\Directv_Auto\\final.xlsx");
 
       //Parsear nombre con fecha
         System.out.print ("If you arrived here, it means you're good boy");
-        wb_1.write(os);
+        wb_final.write(os);
         os.flush();
         os.close();
-        wb_1.close();
+        wb_final.close();
     }
 
 
