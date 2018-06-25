@@ -2,8 +2,6 @@ package com.automation.selenium.microstrategy.io;
 
 
 import org.apache.poi.hssf.usermodel.*;
-import org.apache.poi.openxml4j.opc.OPCPackage;
-import org.apache.poi.openxml4j.util.ZipSecureFile;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -12,11 +10,81 @@ import org.apache.poi.xssf.usermodel.*;
 import org.openxmlformats.schemas.drawingml.x2006.spreadsheetDrawing.CTMarker;
 import org.openxmlformats.schemas.drawingml.x2006.spreadsheetDrawing.CTTwoCellAnchor;
 
-import java.io.*;
 import java.util.*;
 
 public class XlsXlsxConverter3 {
-    @SuppressWarnings("unused")
+
+
+    public static void run(String type, Workbook wb_1, Workbook wb_2, Workbook wb_final) {
+
+        final XSSFSheet source_act = ((XSSFWorkbook) wb_1).getSheetAt(0);
+        final XSSFSheet source_prev = ((XSSFWorkbook) wb_2).getSheetAt(0);
+
+        XSSFSheet sMain = ((XSSFWorkbook) wb_final).getSheet("Actual Week");
+        XSSFSheet sLastWeek = ((XSSFWorkbook) wb_final).getSheet("Last Week");
+
+        copySheet(source_act, sMain);
+        copySheet(source_prev, sLastWeek);
+
+        populateSheet (type, sMain, sLastWeek);
+
+    }
+
+    public static void populateSheet(String type, XSSFSheet sMain, XSSFSheet sLastWeek) {
+
+        //Insert formulas
+        CellAddress first_tkt_address_sMain = null;
+        CellAddress last_tkt_address_sMain  = null;
+
+        CellAddress first_tkt_address_lw = null;
+        CellAddress last_tkt_address_lw  = null;
+
+        if(type.equals("SR")){
+            first_tkt_address_sMain = getFirstValContainAddress(sMain, "SR1");
+            last_tkt_address_sMain = getLastValContainAddress(sMain, "SR");
+
+            first_tkt_address_lw = getFirstValContainAddress(sLastWeek, "SR1");
+            last_tkt_address_lw = getLastValContainAddress(sLastWeek, "SR");
+        }else
+        if (type.equals("IN")){
+            first_tkt_address_sMain = getFirstValContainAddress(sMain, "IN9");
+            last_tkt_address_sMain = getLastValContainAddress(sMain, "IN");
+
+            first_tkt_address_lw = getFirstValContainAddress(sLastWeek, "IN9");
+            last_tkt_address_lw = getLastValContainAddress(sLastWeek, "IN");
+        }
+
+        //Header titles
+        final Cell cell_header_sourc = sMain.getRow(2).getCell(15);
+        Cell cell_header_dest = sMain.getRow(2).getCell(16);
+        if (cell_header_dest == null)
+            cell_header_dest = sMain.getRow(2).createCell(16);
+
+
+        copyCell(cell_header_sourc, cell_header_dest, new ArrayList<CellStyle>());
+        setCellValue(sMain, 2, 16, CellType.STRING, "Aging");
+
+
+        //Set formulas
+        final DataFormat format = sMain.getWorkbook().createDataFormat();
+
+        for (int i = first_tkt_address_sMain.getRow(); i <= last_tkt_address_sMain.getRow(); i++){
+            setFormulaCell(sMain,i, 16, format, CellType.FORMULA, "TODAY()-j" + (i+1));
+            setFormulaCell(sMain, i, 17,
+                    CellType.FORMULA,
+                    getVlookUpFormulaOnPos(
+                            "A" + (i+1),
+                            sLastWeek.getSheetName(),
+                            first_tkt_address_lw.toString() + ":"
+                                    + "I" + (last_tkt_address_lw.getRow()+1),
+                            7,
+                            "FALSE"
+                    ));
+
+        }
+
+    }
+
     private static class FormulaInfo {
 
         private String sheetName;
@@ -702,7 +770,6 @@ public class XlsXlsxConverter3 {
             c.setCellValue((Boolean) value);
     }
 
-
     private static void setFormulaCell(Sheet sheet, int row, int cell, CellType formula, Object value) {
         Row r = sheet.getRow(row);
         if (r == null)
@@ -872,150 +939,8 @@ public class XlsXlsxConverter3 {
                 + col + ")";
     }
 
-
     private static void setHeader(String title, int col, CellStyle cs) {
 
     }
-
-
-    /**
-     * Windows
-     * */
-
-
-    public static final String destination_dir =
-            "C:" + File.separator
-                    + "Users" + File.separator
-                    + "ivan.monzon" + File.separator
-                    + "Documents" + File.separator
-                    + "Directv_Auto" + File.separator
-                    + "SR_Phermosi_22jun2018_0700AM.xlsx";
-
-    public static final String source_dir =
-            "C:" + File.separator
-                    + "Users" + File.separator
-                    + "ivan.monzon" + File.separator
-                    + "Documents" + File.separator
-                    + "Directv_Auto" + File.separator
-                    + "SR_Phermosi_15jun2018_0701AM.xlsx";
-
-
-    /**
-     * Linux
-     */
-/*
-    public static final String destination_dir =
-            "/" + File.separator
-                    + "home" + File.separator
-                    + "capitanempanada" + File.separator
-                    + "Projects" + File.separator
-                    + "dataset" + File.separator
-                    + "SR_Phermosi_15jun2018_0701AM.xlsx";
-
-    public static final String source_dir =
-            "/" + File.separator
-                    + "home" + File.separator
-                    + "capitanempanada" + File.separator
-                    + "Projects" + File.separator
-                    + "dataset" + File.separator
-                    + "SR_Phermosi_08jun2018_0701AM.xlsx";
-
-*/
-    public static void main(String[] args) throws Exception {
-
-        ZipSecureFile.setMinInflateRatio(0);
-
-        //Get files
-        Workbook wb_1 = new XSSFWorkbook(OPCPackage.open(destination_dir));
-        Workbook wb_2 = new XSSFWorkbook(OPCPackage.open(source_dir));
-        Workbook wb_final = new XSSFWorkbook();
-
-        wb_final.createSheet("Actual Week");
-        wb_final.createSheet("Last Week");
-        wb_final.createSheet("Final Report");
-
-        XSSFSheet source_act = ((XSSFWorkbook) wb_1).getSheetAt(0);
-        XSSFSheet sMain = ((XSSFWorkbook) wb_final).getSheetAt(0);
-        XSSFSheet sLastWeek = ((XSSFWorkbook) wb_final).getSheet("Last Week");
-        XSSFSheet source_prev = ((XSSFWorkbook) wb_2).getSheetAt(0);
-
-        copySheet(source_act, sMain);
-        copySheet(source_prev, sLastWeek);
-
-        //configurar para SR o para INC
-        final CellAddress first_inc_address_main = getFirstValContainAddress(sMain, "SR1");
-        final CellAddress last_inc_address_main = getLastValContainAddress(sMain, "SR");
-
-        final CellAddress first_inc_address_lw = getFirstValContainAddress(sLastWeek, "SR1");
-        final CellAddress last_inc_address_lw = getLastValContainAddress(sLastWeek, "SR");
-
-        final DataFormat format = wb_final.createDataFormat();
-
-        for (int i = first_inc_address_main.getRow(); i <= last_inc_address_main.getRow(); i++){
-            setFormulaCell(sMain,i, 16, format, CellType.FORMULA, "TODAY()-j" + (i+1));
-            setFormulaCell(sMain, i, 17,
-                                    CellType.FORMULA,
-                                    getVlookUpFormulaOnPos(
-                                            "A" + (i+1),
-                                            sLastWeek.getSheetName(),
-                                            first_inc_address_lw.toString() + ":"
-                                                    + "I" + (last_inc_address_lw.getRow()+1),
-                                            7,
-                                            "FALSE"
-            ));
-
-        }
-
-        final Cell cell_header_sourc = sMain.getRow(2).getCell(15);
-        Cell cell_header_dest = sMain.getRow(2).getCell(16);
-        if (cell_header_dest == null)
-            cell_header_dest = sMain.getRow(2).createCell(16);
-
-        if (cell_header_sourc == null)
-            System.out.println("not found cell");
-        else if(cell_header_dest == null )
-            System.out.println("not found cell_1");
-
-        copyCell(cell_header_sourc, cell_header_dest, new ArrayList<CellStyle>());
-        setCellValue(sMain, 2, 16, CellType.STRING, "Aging");
-
-        //Start operations
-
-        CellReference vlookup_ref = new CellReference("d2");
-        FormulaEvaluator evaluator = wb_final.getCreationHelper().createFormulaEvaluator();
-
-
-        for (int i = first_inc_address_main.getRow(); i <= last_inc_address_main.getRow(); i++){
-            CellValue cellValue = evaluator.evaluate(sMain.getRow(i).getCell(17));
-
-            switch (cellValue.getCellTypeEnum()) {
-                case BOOLEAN:
-                    System.out.println(cellValue.getBooleanValue());
-                    break;
-                case NUMERIC:
-                    System.out.println(cellValue.getNumberValue());
-                    break;
-                case STRING:
-                    System.out.println(cellValue.getStringValue());
-                    break;
-                case BLANK:
-                    break;
-                case ERROR:
-                    System.out.println("#NA");
-                    break;
-            }
-        }
-
-
-        OutputStream os = new FileOutputStream("C:\\Users\\ivan.monzon\\Documents\\Directv_Auto\\final.xlsx");
-
-      //Parsear nombre con fecha
-        System.out.print ("If you arrived here, it means you're good boy");
-        wb_final.write(os);
-        os.flush();
-        os.close();
-        wb_final.close();
-    }
-
 
 }
