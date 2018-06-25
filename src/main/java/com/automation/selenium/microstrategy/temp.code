@@ -1,0 +1,26 @@
+
+//        //Start operations
+//        CellReference vlookup_ref = new CellReference("d2");
+//        FormulaEvaluator evaluator = wb_final.getCreationHelper().createFormulaEvaluator();
+//
+//
+//        for (int i = first_inc_address_sMain.getRow(); i <= last_inc_address_sMain.getRow(); i++){
+//            CellValue cellValue = evaluator.evaluate(sMain.getRow(i).getCell(17));
+//
+//            switch (cellValue.getCellTypeEnum()) {
+//                case BOOLEAN:
+//                    System.out.println(cellValue.getBooleanValue());
+//                    break;
+//                case NUMERIC:
+//                    System.out.println(cellValue.getNumberValue());
+//                    break;
+//                case STRING:
+//                    System.out.println(cellValue.getStringValue());
+//                    break;
+//                case BLANK:
+//                    break;
+//                case ERROR:
+//                    System.out.println("#NA");
+//                    break;
+//            }
+//        }
